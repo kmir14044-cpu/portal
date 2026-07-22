@@ -74,7 +74,7 @@ const pricingDefaults = {
   ziyaratSar: "500",
   ziyaratTaifSar: "500",
   ziyaratBadarSar: "560",
-  ziyaratRiyadhSar: "1200",
+  ziyaratMadinaSar: "1200",
   pdfNote: "Final price may vary based on availability and confirmation."
 };
 
@@ -228,7 +228,7 @@ function categoryProfitSar(category, settings) {
 const defaultZiyarats = [
   { id: "taif", name: "Taif Ziyarat", price: 500, image: "https://tse3.mm.bing.net/th?q=Taif%20Saudi%20Arabia%20mountains%20Al%20Hada&w=900&h=560&c=7&rs=1&p=0&o=5&pid=1.7" },
   { id: "badar", name: "Badar Ziyarat", price: 560, image: "https://tse3.mm.bing.net/th?q=Badr%20Saudi%20Arabia%20historical%20site%20mosque&w=900&h=560&c=7&rs=1&p=0&o=5&pid=1.7" },
-  { id: "riyadh", name: "Riyadh Ziyarat", price: 1200, image: "https://tse3.mm.bing.net/th?q=Riyadh%20Saudi%20Arabia%20Kingdom%20Centre%20skyline&w=900&h=560&c=7&rs=1&p=0&o=5&pid=1.7" }
+  { id: "madina", name: "Madina Ziyarat", price: 1200, image: "https://tse3.mm.bing.net/th?q=Madina%20Saudi%20Arabia%20Masjid%20Nabawi%20green%20dome&w=900&h=560&c=7&rs=1&p=0&o=5&pid=1.7" }
 ];
 
 function activeZiyarats() {

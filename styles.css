@@ -3058,3 +3058,179 @@ body {
   object-position: center;
   background: #eef4f1;
 }
+
+/* Requested portal polish: simplified heading and stronger Group controls */
+.hero.simpleHero {
+  min-height: auto;
+  width: 100%;
+  margin: 0;
+  padding: 28px 20px 18px;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: #fff;
+  overflow: visible;
+}
+.hero.simpleHero::before { display: none; }
+.hero.simpleHero .heroIntro {
+  width: 100%;
+  max-width: none;
+  text-align: center;
+}
+.hero.simpleHero h1 {
+  max-width: none;
+  margin: 0;
+  font-family: inherit;
+  font-size: clamp(28px, 4vw, 42px);
+  line-height: 1.2;
+  font-weight: 900;
+  color: var(--ink);
+}
+.hero.simpleHero p { display: none; }
+.modernMain { margin-top: 0; }
+
+body[data-step="group"] .miniPanel {
+  border-width: 2px;
+  border-color: #d5d0c7;
+  border-radius: 12px;
+  padding: 18px 20px;
+}
+body[data-step="group"] .miniPanel h3 {
+  margin-bottom: 8px;
+  font-size: 14px;
+  line-height: 1.2;
+  letter-spacing: .045em;
+  font-weight: 900;
+}
+body[data-step="group"] .counterRow > span {
+  font-size: 16px;
+  font-weight: 800;
+}
+body[data-step="group"] .circleBtn {
+  border-width: 1.5px;
+  font-weight: 800;
+}
+body[data-step="group"] .field.big select,
+body[data-step="group"] .compactCounter,
+body[data-step="group"] .groupNote {
+  border-width: 2px;
+  border-color: #d5d0c7;
+}
+body[data-step="group"] .compactCounter {
+  box-sizing: border-box;
+  overflow: hidden;
+  border-radius: 10px;
+  padding: 0 12px;
+}
+body[data-step="group"] .roomsControl {
+  min-width: 0;
+  overflow: visible;
+}
+body[data-step="group"] .roomsControl > span,
+body[data-step="group"] .field.big > span {
+  font-size: 12px;
+  font-weight: 900;
+}
+
+@media (max-width: 620px) {
+  .hero.simpleHero { padding: 20px 16px 12px; }
+  .hero.simpleHero h1 { font-size: 26px; }
+  body[data-step="group"] .miniPanel h3 { font-size: 15px; }
+  body[data-step="group"] .counterRow > span { font-size: 16px; }
+  body[data-step="group"] .compactCounter {
+    height: 50px !important;
+    min-height: 50px !important;
+    border: 2px solid #d5d0c7 !important;
+    border-radius: 10px !important;
+  }
+}
+
+
+/* Final room counter fixes */
+.compactCounter{
+display:grid;
+align-items:center;
+grid-template-columns:40px 1fr 40px!important;
+height:56px!important;
+min-height:56px!important;
+border:2px solid #d8d2c8!important;
+border-radius:14px!important;
+overflow:visible!important;
+box-sizing:border-box;
+}
+.compactCounter strong{
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:32px!important;
+font-weight:800;
+width:100%;
+}
+.circleBtn{
+width:38px!important;
+height:38px!important;
+border:2px solid #d8d2c8!important;
+font-weight:700;
+}
+.optionCard input[type=radio]{
+width:28px;height:28px;border:3px solid #0b6b4a!important;
+}
+.optionCard input[type=radio]:checked{
+box-shadow:inset 0 0 0 6px #0b6b4a;
+}
+
+/* Final Group controls alignment: Room Type and Rooms equal height */
+body[data-step="group"] .groupRoomControls .field.big select,
+body[data-step="group"] .groupRoomControls .compactCounter {
+  height: 56px !important;
+  min-height: 56px !important;
+  max-height: 56px !important;
+  box-sizing: border-box !important;
+  border: 2px solid #d5d0c7 !important;
+  border-radius: 14px !important;
+}
+
+body[data-step="group"] .groupRoomControls .field.big select {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  line-height: 52px;
+}
+
+body[data-step="group"] .groupRoomControls .compactCounter {
+  display: grid !important;
+  grid-template-columns: 38px minmax(0, 1fr) 38px !important;
+  align-items: center !important;
+  padding: 0 10px !important;
+  overflow: visible !important;
+}
+
+body[data-step="group"] .groupRoomControls .compactCounter strong {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0 !important;
+  font-size: 24px !important;
+  font-weight: 500 !important;
+  line-height: 1 !important;
+  text-align: center !important;
+}
+
+body[data-step="group"] .groupRoomControls .compactCounter .circleBtn {
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  min-height: 36px !important;
+  padding: 0 !important;
+  line-height: 1 !important;
+}
+
+@media (max-width: 620px) {
+  body[data-step="group"] .groupRoomControls .field.big select,
+  body[data-step="group"] .groupRoomControls .compactCounter {
+    height: 56px !important;
+    min-height: 56px !important;
+    max-height: 56px !important;
+  }
+}

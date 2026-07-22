@@ -75,7 +75,7 @@ const settingsDefaults = {
   ziyaratSar: "500",
   ziyaratTaifSar: "500",
   ziyaratBadarSar: "560",
-  ziyaratRiyadhSar: "1200",
+  ziyaratMadinaSar: "1200",
   pdfNote: "Final price may vary based on availability and confirmation."
 };
 
@@ -101,7 +101,7 @@ function getDeletedZiyarats() { return storageGet("umrahDeletedZiyarats", []); }
 const defaultZiyarats = [
   { id: "taif", name: "Taif Ziyarat", price: 500, image: "https://tse3.mm.bing.net/th?q=Taif%20Saudi%20Arabia%20mountains%20Al%20Hada&w=900&h=560&c=7&rs=1&p=0&o=5&pid=1.7" },
   { id: "badar", name: "Badar Ziyarat", price: 560, image: "https://tse3.mm.bing.net/th?q=Badr%20Saudi%20Arabia%20historical%20site%20mosque&w=900&h=560&c=7&rs=1&p=0&o=5&pid=1.7" },
-  { id: "riyadh", name: "Riyadh Ziyarat", price: 1200, image: "https://tse3.mm.bing.net/th?q=Riyadh%20Saudi%20Arabia%20Kingdom%20Centre%20skyline&w=900&h=560&c=7&rs=1&p=0&o=5&pid=1.7" }
+  { id: "madina", name: "Madina Ziyarat", price: 1200, image: "https://tse3.mm.bing.net/th?q=Madina%20Saudi%20Arabia%20Masjid%20Nabawi%20green%20dome&w=900&h=560&c=7&rs=1&p=0&o=5&pid=1.7" }
 ];
 function getZiyarats() {
   const overrides=getZiyaratOverrides(), deleted=new Set(getDeletedZiyarats());
@@ -634,7 +634,7 @@ function renderSettings() {
   $("#visaPriceInput").value = settings.visaPrice;
   $("#ziyaratTaifSarInput").value = settings.ziyaratTaifSar || settings.ziyaratSar || "500";
   $("#ziyaratBadarSarInput").value = settings.ziyaratBadarSar || "560";
-  $("#ziyaratRiyadhSarInput").value = settings.ziyaratRiyadhSar || "1200";
+  $("#ziyaratMadinaSarInput").value = settings.ziyaratMadinaSar || "1200";
   $("#pdfNote").value = settings.pdfNote;
   renderProfitSettings();
 }
@@ -1052,7 +1052,7 @@ $("#saveSettingsBtn").addEventListener("click", () => {
     ziyaratSar: $("#ziyaratTaifSarInput").value || settingsDefaults.ziyaratSar,
     ziyaratTaifSar: $("#ziyaratTaifSarInput").value || settingsDefaults.ziyaratTaifSar,
     ziyaratBadarSar: $("#ziyaratBadarSarInput").value || settingsDefaults.ziyaratBadarSar,
-    ziyaratRiyadhSar: $("#ziyaratRiyadhSarInput").value || settingsDefaults.ziyaratRiyadhSar,
+    ziyaratMadinaSar: $("#ziyaratMadinaSarInput").value || settingsDefaults.ziyaratMadinaSar,
     pdfNote: $("#pdfNote").value.trim() || settingsDefaults.pdfNote
   });
   $("#settingsSaved").classList.remove("hidden");
