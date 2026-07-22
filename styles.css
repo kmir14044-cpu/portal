@@ -3234,3 +3234,21 @@ body[data-step="group"] .groupRoomControls .compactCounter .circleBtn {
     max-height: 56px !important;
   }
 }
+
+/* Typography consistency: use Poppins throughout the customer portal */
+html,
+body,
+body * {
+  font-family: "Poppins", system-ui, -apple-system, "Segoe UI", Arial, sans-serif !important;
+}
+
+/* Rooms value: same Poppins face and normal visual weight */
+body[data-step="group"] .groupRoomControls .compactCounter strong {
+  font-family: "Poppins", system-ui, -apple-system, "Segoe UI", Arial, sans-serif !important;
+  font-size: 24px !important;
+  font-weight: 400 !important;
+  font-style: normal !important;
+  letter-spacing: 0 !important;
+  line-height: 1 !important;
+  font-variant-numeric: normal !important;
+}
