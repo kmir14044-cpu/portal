@@ -1167,7 +1167,8 @@ figcaption {
   }
   .leadsTable,
   .vehiclesTable,
-  .transportTable {
+  .transportTable,
+  .ziyaratTable {
     display: block;
     min-width: 0;
     width: 100%;
@@ -1177,18 +1178,21 @@ figcaption {
   }
   .leadsTable thead,
   .vehiclesTable thead,
-  .transportTable thead {
+  .transportTable thead,
+  .ziyaratTable thead {
     display: none;
   }
   .leadsTable tbody,
   .vehiclesTable tbody,
-  .transportTable tbody {
+  .transportTable tbody,
+  .ziyaratTable tbody {
     display: grid;
     gap: 10px;
   }
   .leadsTable tr,
   .vehiclesTable tr,
-  .transportTable tr {
+  .transportTable tr,
+  .ziyaratTable tr {
     display: grid;
     gap: 8px;
     padding: 12px;
@@ -1198,7 +1202,8 @@ figcaption {
   }
   .leadsTable td,
   .vehiclesTable td,
-  .transportTable td {
+  .transportTable td,
+  .ziyaratTable td {
     display: grid;
     grid-template-columns: 94px minmax(0, 1fr);
     align-items: start;
@@ -1210,7 +1215,8 @@ figcaption {
   }
   .leadsTable td::before,
   .vehiclesTable td::before,
-  .transportTable td::before {
+  .transportTable td::before,
+  .ziyaratTable td::before {
     content: attr(data-label);
     color: var(--muted);
     font-weight: 900;
@@ -1220,12 +1226,14 @@ figcaption {
   }
   .leadsTable td[colspan],
   .vehiclesTable td[colspan],
-  .transportTable td[colspan] {
+  .transportTable td[colspan],
+  .ziyaratTable td[colspan] {
     display: block;
   }
   .leadsTable td[colspan]::before,
   .vehiclesTable td[colspan]::before,
-  .transportTable td[colspan]::before {
+  .transportTable td[colspan]::before,
+  .ziyaratTable td[colspan]::before {
     content: "";
   }
   .leadNameCell,
@@ -1263,6 +1271,36 @@ figcaption {
   }
   .vehiclesTable .urlCell small {
     display: none;
+  }
+  .ziyaratTableWrap {
+    margin-inline: 0;
+    border: 0;
+    background: transparent;
+  }
+  .ziyaratTable td:first-child {
+    display: block;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e5eee0;
+  }
+  .ziyaratTable td:first-child::before {
+    display: none;
+  }
+  .ziyaratTable .tableThumb {
+    width: 100%;
+    height: 150px;
+    display: block;
+    border-radius: 11px;
+  }
+  .ziyaratTable td:nth-child(2) b {
+    color: var(--green2);
+    font-size: 14px;
+  }
+  .ziyaratTable td:nth-child(3) {
+    color: var(--green2);
+    font-weight: 900;
+  }
+  #ziyaratView .cardHead .ghostBtn {
+    width: 100%;
   }
   .statsGrid {
     gap: 10px;
