@@ -79,23 +79,12 @@ body {
   border-radius: 8px;
 }
 
-.navActions .btn.alt {
-  min-height: 46px;
-  padding: 0 22px;
-  color: var(--green);
-  border-color: rgba(12, 91, 66, .22);
+
+
+.btn.small.alt wa-icon {
+    font-size: 16px;
 }
 
-.navActions .btn.alt::before {
-  content: "◎";
-  font-size: 18px;
-  line-height: 1;
-}
-
-.navActions .btn:not(.alt)::before {
-  content: "☎";
-  font-size: 16px;
-}
 
 .hero {
   position: relative;
@@ -3633,7 +3622,8 @@ body[data-step="group"] .groupRoomControls .compactCounter strong {
 }
 
 .navActions .btn.alt::before {
-  content: "⌂" !important;
+  content: none !important;
+  display: none !important;
   width: auto !important;
   height: auto !important;
   border: 0 !important;
@@ -3647,15 +3637,42 @@ body[data-step="group"] .groupRoomControls .compactCounter strong {
 }
 
 .navActions .btn:not(.alt)::before {
-  content: "☏" !important;
-  width: auto !important;
-  height: auto !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: none !important;
-  box-shadow: none !important;
+  content: none !important;
+  display: none !important;
+}
+/* Header buttons use explicit wa-icon markup instead of pseudo icons. */
+.navActions .btn::before,
+.navActions .btn.alt::before,
+.navActions .btn:not(.alt)::before {
+  content: none !important;
+  display: none !important;
+}
+
+.navActions .btn wa-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
   color: currentColor;
-  font-size: 19px;
-  font-weight: 900;
+  font-size: 18px;
   line-height: 1;
+}
+
+.navActions .btn wa-icon[name="house"]::before {
+  content: "\2302";
+}
+
+.navActions .btn wa-icon[name="headset"]::before {
+  content: "\260E";
+}
+
+/* Final production override: header action buttons must not render icon glyphs. */
+.navActions .btn::before,
+.navActions .btn.alt::before,
+.navActions .btn:not(.alt)::before,
+.navActions .btn wa-icon,
+.navActions .btn wa-icon::before {
+  content: none !important;
+  display: none !important;
 }
