@@ -538,8 +538,9 @@ function quote() {
   const visaTravelers = state.adults + state.children + state.infants;
   const settings = localSettings();
   const visaSar = normalizedVisaPriceSar(settings);
-  const visaTotal = Math.round(visaTravelers * visaSar * (Number(settings.exchangeRate) || exchangeRate));
-  const ziyaratTotal = state.ziyarat ? sar(ziyaratRateSar()) : 0;
+  const packageReady = Boolean(hotelLines.length && hotelLines.every((line) => line.hotel));
+  const visaTotal = packageReady ? Math.round(visaTravelers * visaSar * (Number(settings.exchangeRate) || exchangeRate)) : 0;
+  const ziyaratTotal = packageReady && state.ziyarat ? sar(ziyaratRateSar()) : 0;
   const subtotal = hotelTotal + transportTotal + visaTotal + ziyaratTotal;
   const packageCategory = selectedPackageCategory(hotelLines);
   const profitTotal = subtotal ? sar(categoryProfitSar(packageCategory, settings)) : 0;
@@ -550,6 +551,7 @@ function quote() {
     visaTotal,
     visaSar,
     visaTravelers,
+    packageReady,
     ziyaratTotal,
     packageCategory,
     subtotal,
