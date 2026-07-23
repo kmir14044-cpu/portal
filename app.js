@@ -1358,7 +1358,10 @@ function saveDashboardLead(q) {
     createdAt: new Date().toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })
   };
   const saved = JSON.parse(localStorage.getItem("umrahLeads") || "[]");
-  localStorage.setItem("umrahLeads", JSON.stringify([lead, ...saved]));
+  const updated = [lead, ...saved];
+  localStorage.setItem("umrahLeads", JSON.stringify(updated));
+  window.portalApi?.createLead?.(lead);
+  window.portalApi?.setStorage?.("umrahLeads", updated);
   state.leadSaved = true;
 }
 
@@ -1459,7 +1462,7 @@ function buildBrandedPdf(q, logo) {
   let commands = [];
   let y = 700;
   const margin = 44;
-  const pageBottom = 58;
+  const pageBottom = 62;
   const green = "0.05 0.36 0.26";
   const greenLight = "0.94 0.98 0.96";
   const gold = "0.78 0.58 0.18";
@@ -1500,11 +1503,11 @@ function buildBrandedPdf(q, logo) {
     }
   };
   const heading = (value) => {
-    ensure(38);
+    ensure(42);
     text(value, margin, y, 14, "F2", green);
-    y -= 10;
+    y -= 11;
     line(margin, y, 551, "0.05 0.36 0.26");
-    y -= 18;
+    y -= 20;
   };
   const row = (label, value) => {
     ensure(18);
@@ -1514,13 +1517,14 @@ function buildBrandedPdf(q, logo) {
   };
   const bullets = (items) => {
     items.forEach((item) => {
-      wrap(item, 92).forEach((part, index) => {
-        ensure(14);
+      wrap(item, 88).forEach((part, index) => {
+        ensure(16);
         text(index ? part : `- ${part}`, margin + (index ? 12 : 0), y, 9, "F1", black);
-        y -= 13;
+        y -= 12;
       });
+      y -= 2;
     });
-    y -= 4;
+    y -= 6;
   };
   const header = (first = false) => {
     solidRect(0, 792, 595, 50, green);
@@ -1532,9 +1536,9 @@ function buildBrandedPdf(q, logo) {
     text(new Date().toLocaleDateString("en-GB"), 420, 750, 9, "F1", muted);
   };
   const footer = () => {
-    line(44, 40, 551);
-    text(`Tours in Pakistan | WhatsApp ${agencyWhatsapp} | toursinpakistan.com`, 44, 25, 8, "F2", green);
-    text("Final booking subject to availability, supplier confirmation and payment clearance.", 300, 25, 8, "F1", muted);
+    line(44, 44, 551);
+    text(`Tours in Pakistan | WhatsApp ${agencyWhatsapp} | toursinpakistan.com`, 44, 29, 8, "F2", green);
+    text("Final booking subject to availability, supplier confirmation and payment clearance.", 44, 16, 8, "F1", muted);
   };
   const statCard = (x, yy, w, title, value) => {
     rect(x, yy, w, 50, "1 1 1", lineColor);
@@ -1582,16 +1586,21 @@ function buildBrandedPdf(q, logo) {
   wrap(readableTransportSectors().join(", ") || "No sectors selected", 70).slice(0, 2).forEach((part, index) => text(part, 225, y - 20 - (index * 12), 9, "F1", black));
   y -= 86;
 
+  const pageBeforeExtras = pages.length;
   heading("Extras");
   rect(44, y - 66, 507, 66, "1 1 1", lineColor);
   text("Visa Processing", 60, y - 18, 10, "F2", green);
   text(`${q.visaTravelers || travelers} traveler${(q.visaTravelers || travelers) === 1 ? "" : "s"} x SAR ${Number(q.visaSar || 0).toLocaleString()} included`, 170, y - 18, 9, "F1", black);
   text("Ziyarat", 60, y - 42, 10, "F2", green);
   text(state.ziyarat ? ziyaratLabel() : "Not included", 140, y - 42, 9, "F1", black);
-  footer();
-  newPage();
-
-  header(false);
+  y -= 86;
+  if (pages.length === pageBeforeExtras) {
+    footer();
+    newPage();
+    header(false);
+  } else {
+    y -= 10;
+  }
   heading("Package Itinerary");
   hotelRows.forEach((item, index) => {
     ensure(56);
@@ -1614,13 +1623,6 @@ function buildBrandedPdf(q, logo) {
   bullets(rules);
   heading("Payment & Cancellation Notes");
   bullets(paymentRules);
-  heading("Important Notes");
-  bullets([
-    "This PDF is generated from current portal data and dashboard pricing settings.",
-    "Hotel seasonal rates are calculated night-by-night according to the selected travel dates.",
-    "Any missing supplier rate will show as pending and must be confirmed manually before booking.",
-    "Please verify passenger names, passport details, travel dates and route before payment."
-  ]);
   footer();
   pages.push(commands.join("\n"));
 
@@ -1699,4 +1701,9 @@ document.getElementById("editTripBtn").addEventListener("click", () => {
 document.getElementById("pdfBtn").addEventListener("click", downloadPdf);
 document.querySelectorAll("[data-close-submit]").forEach((button) => button.addEventListener("click", closeSubmitModal));
 
-render();
+async function bootPortal() {
+  await window.portalApi?.hydrateStorage?.();
+  render();
+}
+
+bootPortal();
