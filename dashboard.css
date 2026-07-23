@@ -1419,3 +1419,30 @@ body,
 body * {
   font-family: "Poppins", system-ui, -apple-system, "Segoe UI", Arial, sans-serif !important;
 }
+
+/* Stronger production field strokes */
+:root {
+  --line: #cbd8d0;
+}
+
+input,
+select,
+textarea,
+.metric,
+.panel,
+.tableWrap,
+.hotelCard,
+.vehicleInfo img,
+.recordModal,
+.detailsTable,
+.settingsGrid label,
+.profitRow,
+.rowActions button {
+  border-color: #cbd8d0 !important;
+}
+
+input,
+select,
+textarea {
+  border-width: 1.5px !important;
+}

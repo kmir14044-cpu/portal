@@ -71,8 +71,9 @@ const settingsDefaults = {
   profitEconomySar: "200",
   profitStandardSar: "250",
   profitExecutiveSar: "300",
-  visaPrice: "43000",
+  visaPrice: "566",
   ziyaratSar: "500",
+  ziyaratMakkahSar: "250",
   ziyaratTaifSar: "500",
   ziyaratBadarSar: "560",
   ziyaratMadinaSar: "1200",
@@ -99,19 +100,38 @@ function isAuthed() {
 function getZiyaratOverrides() { return storageGet("umrahZiyaratOverrides", {}); }
 function getDeletedZiyarats() { return storageGet("umrahDeletedZiyarats", []); }
 const defaultZiyarats = [
+  { id: "makkah", name: "Makkah Ziyarat", price: 250, image: "https://tse3.mm.bing.net/th?q=Makkah%20Ziyarat%20Jabal%20Al%20Noor%20Cave%20Hira&w=900&h=560&c=7&rs=1&p=0&o=5&pid=1.7" },
   { id: "taif", name: "Taif Ziyarat", price: 500, image: "https://tse3.mm.bing.net/th?q=Taif%20Saudi%20Arabia%20mountains%20Al%20Hada&w=900&h=560&c=7&rs=1&p=0&o=5&pid=1.7" },
   { id: "badar", name: "Badar Ziyarat", price: 560, image: "https://tse3.mm.bing.net/th?q=Badr%20Saudi%20Arabia%20historical%20site%20mosque&w=900&h=560&c=7&rs=1&p=0&o=5&pid=1.7" },
   { id: "madina", name: "Madina Ziyarat", price: 1200, image: "https://tse3.mm.bing.net/th?q=Madina%20Saudi%20Arabia%20Masjid%20Nabawi%20green%20dome&w=900&h=560&c=7&rs=1&p=0&o=5&pid=1.7" }
 ];
 function getZiyarats() {
   const overrides=getZiyaratOverrides(), deleted=new Set(getDeletedZiyarats());
-  const base=defaultZiyarats.filter(x=>!deleted.has(x.id)).map(x=>({...x,...(overrides[x.id]||{})}));
+  const settings = getSettings();
+  const settingPrices = {
+    makkah: settings.ziyaratMakkahSar,
+    taif: settings.ziyaratTaifSar || settings.ziyaratSar,
+    badar: settings.ziyaratBadarSar,
+    madina: settings.ziyaratMadinaSar
+  };
+  const base=defaultZiyarats.filter(x=>!deleted.has(x.id)).map(x=>({
+    ...x,
+    price: Number(settingPrices[x.id] ?? x.price) || x.price,
+    ...(overrides[x.id]||{})
+  }));
   const ids=new Set(base.map(x=>x.id));
   return [...base,...Object.values(overrides).filter(x=>x?.id&&!deleted.has(x.id)&&!ids.has(x.id))];
 }
 
 function getSettings() {
-  return { ...settingsDefaults, ...storageGet("umrahSettings", {}) };
+  const settings = { ...settingsDefaults, ...storageGet("umrahSettings", {}) };
+  return { ...settings, visaPrice: String(normalizedVisaPriceSar(settings)) };
+}
+
+function normalizedVisaPriceSar(settings) {
+  const value = Number(settings?.visaPrice) || 0;
+  const rate = Number(settings?.exchangeRate) || exchangeRate;
+  return value > 5000 && rate ? Math.round(value / rate) : value;
 }
 
 function displayCategory(category) {
@@ -632,6 +652,7 @@ function renderSettings() {
   $("#profitStandardSarInput").value = settings.profitStandardSar || settings.profitSar || "250";
   $("#profitExecutiveSarInput").value = settings.profitExecutiveSar || "300";
   $("#visaPriceInput").value = settings.visaPrice;
+  $("#ziyaratMakkahSarInput").value = settings.ziyaratMakkahSar || "250";
   $("#ziyaratTaifSarInput").value = settings.ziyaratTaifSar || settings.ziyaratSar || "500";
   $("#ziyaratBadarSarInput").value = settings.ziyaratBadarSar || "560";
   $("#ziyaratMadinaSarInput").value = settings.ziyaratMadinaSar || "1200";
@@ -806,6 +827,8 @@ function openHotelEditor(hotel) {
     <label>Distance / Area<input id="recordDistance" value="${escapeHtml(record.distance || "")}"></label>
     <label>Meal Plan<input id="recordMeal" value="${escapeHtml(record.meal || "")}"></label>
     <label>Photo URL<input id="recordPhoto" value="${escapeHtml(record.photo || hotelImage(record))}" placeholder="https://..."></label>
+    <label class="fullField">Or Upload Image<input id="recordPhotoFile" type="file" accept="image/*"></label>
+    <div class="fullField" id="recordPhotoPreviewWrap" style="${record.photo || hotelImage(record) ? "" : "display:none"}"><img id="recordPhotoPreview" src="${escapeHtml(record.photo || hotelImage(record))}" alt="Hotel preview" style="width:180px;height:112px;object-fit:cover;border-radius:10px;border:1px solid #cbd8d0"></div>
     <label class="fullField">Custom Fields<textarea id="recordCustomFields" placeholder="Feature: Value&#10;Distance note: Near Haram">${escapeHtml(formatCustomFields(record.customFields))}</textarea></label>
     <div class="fullField seasonTools">
       <div>
@@ -819,6 +842,7 @@ function openHotelEditor(hotel) {
     </div>
   `;
   bindSeasonEditor();
+  bindImageUpload("recordPhoto", "recordPhotoFile", "recordPhotoPreviewWrap", "recordPhotoPreview");
   $("#recordModal").classList.remove("hidden");
 }
 
@@ -846,23 +870,31 @@ function openZiyaratEditor(item) {
     <label class="fullField">Or Upload Image<input id="ziyaratImageFile" type="file" accept="image/*"></label>
     <div class="fullField" id="ziyaratImagePreviewWrap" style="${record.image ? '' : 'display:none'}"><img id="ziyaratImagePreview" src="${escapeHtml(record.image||'')}" alt="Ziyarat preview" style="width:160px;height:100px;object-fit:cover;border-radius:10px;border:1px solid #ddd"></div>`;
   $("#recordModal").classList.remove("hidden");
-  $("#ziyaratImageFile")?.addEventListener("change", (event) => {
+  bindImageUpload("ziyaratImage", "ziyaratImageFile", "ziyaratImagePreviewWrap", "ziyaratImagePreview");
+}
+
+function bindImageUpload(urlInputId, fileInputId, previewWrapId, previewImageId) {
+  const urlInput = $(`#${urlInputId}`);
+  const fileInput = $(`#${fileInputId}`);
+  const previewWrap = $(`#${previewWrapId}`);
+  const previewImage = $(`#${previewImageId}`);
+  fileInput?.addEventListener("change", (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith("image/")) { alert("Please choose an image file."); return; }
     const reader = new FileReader();
     reader.onload = () => {
-      $("#ziyaratImage").value = String(reader.result || "");
-      $("#ziyaratImagePreview").src = String(reader.result || "");
-      $("#ziyaratImagePreviewWrap").style.display = "block";
+      urlInput.value = String(reader.result || "");
+      previewImage.src = String(reader.result || "");
+      previewWrap.style.display = "block";
     };
     reader.readAsDataURL(file);
   });
-  $("#ziyaratImage")?.addEventListener("input", (event) => {
+  urlInput?.addEventListener("input", (event) => {
     const value = event.target.value.trim();
-    if (!value) { $("#ziyaratImagePreviewWrap").style.display = "none"; return; }
-    $("#ziyaratImagePreview").src = value;
-    $("#ziyaratImagePreviewWrap").style.display = "block";
+    if (!value) { previewWrap.style.display = "none"; return; }
+    previewImage.src = value;
+    previewWrap.style.display = "block";
   });
 }
 
@@ -877,8 +909,11 @@ function openVehicleEditor(vehicle) {
     <label>Capacity<input id="vehicleCapacity" value="${escapeHtml(record.capacity || "")}" placeholder="4 pax"></label>
     <label>Vehicle Type<input id="vehicleType" value="${escapeHtml(record.type || "")}" placeholder="Sedan, Van, SUV"></label>
     <label>Photo URL<input id="vehiclePhoto" value="${escapeHtml(photoValue)}" placeholder="https://..."></label>
+    <label class="fullField">Or Upload Image<input id="vehiclePhotoFile" type="file" accept="image/*"></label>
+    <div class="fullField" id="vehiclePhotoPreviewWrap" style="${photoValue ? "" : "display:none"}"><img id="vehiclePhotoPreview" src="${escapeHtml(photoValue)}" alt="Vehicle preview" style="width:180px;height:112px;object-fit:cover;border-radius:10px;border:1px solid #cbd8d0"></div>
     <label class="fullField">Notes<textarea id="vehicleNote" placeholder="Private car for small families">${escapeHtml(record.note || "")}</textarea></label>
   `;
+  bindImageUpload("vehiclePhoto", "vehiclePhotoFile", "vehiclePhotoPreviewWrap", "vehiclePhotoPreview");
   $("#recordModal").classList.remove("hidden");
 }
 
@@ -1050,6 +1085,7 @@ $("#saveSettingsBtn").addEventListener("click", () => {
     profitExecutiveSar: $("#profitExecutiveSarInput").value || settingsDefaults.profitExecutiveSar,
     visaPrice: $("#visaPriceInput").value || settingsDefaults.visaPrice,
     ziyaratSar: $("#ziyaratTaifSarInput").value || settingsDefaults.ziyaratSar,
+    ziyaratMakkahSar: $("#ziyaratMakkahSarInput").value || settingsDefaults.ziyaratMakkahSar,
     ziyaratTaifSar: $("#ziyaratTaifSarInput").value || settingsDefaults.ziyaratTaifSar,
     ziyaratBadarSar: $("#ziyaratBadarSarInput").value || settingsDefaults.ziyaratBadarSar,
     ziyaratMadinaSar: $("#ziyaratMadinaSarInput").value || settingsDefaults.ziyaratMadinaSar,

@@ -70,8 +70,10 @@ const pricingDefaults = {
   profitEconomySar: "200",
   profitStandardSar: "250",
   profitExecutiveSar: "300",
-  visaPrice: "43000",
+  whatsappNumber: "+923703049245",
+  visaPrice: "566",
   ziyaratSar: "500",
+  ziyaratMakkahSar: "250",
   ziyaratTaifSar: "500",
   ziyaratBadarSar: "560",
   ziyaratMadinaSar: "1200",
@@ -80,10 +82,37 @@ const pricingDefaults = {
 
 function localSettings() {
   try {
-    return { ...pricingDefaults, ...(JSON.parse(localStorage.getItem("umrahSettings") || "{}") || {}) };
+    const settings = { ...pricingDefaults, ...(JSON.parse(localStorage.getItem("umrahSettings") || "{}") || {}) };
+    return { ...settings, visaPrice: String(normalizedVisaPriceSar(settings)) };
   } catch {
     return pricingDefaults;
   }
+}
+
+function normalizedVisaPriceSar(settings) {
+  const value = Number(settings?.visaPrice) || 0;
+  const rate = Number(settings?.exchangeRate) || exchangeRate;
+  return value > 5000 && rate ? Math.round(value / rate) : value;
+}
+
+function cleanWhatsappNumber(value = localSettings().whatsappNumber) {
+  const raw = String(value || pricingDefaults.whatsappNumber).trim();
+  const digits = raw.replace(/\D/g, "");
+  if (!digits) return pricingDefaults.whatsappNumber.replace(/\D/g, "");
+  if (digits.startsWith("00")) return digits.slice(2);
+  if (digits.startsWith("0")) return `92${digits.slice(1)}`;
+  return digits;
+}
+
+function displayWhatsappNumber() {
+  const raw = String(localSettings().whatsappNumber || pricingDefaults.whatsappNumber).trim();
+  return raw || pricingDefaults.whatsappNumber;
+}
+
+function updateWhatsappLinks() {
+  const link = document.querySelector("[data-whatsapp-link]");
+  if (!link) return;
+  link.href = `https://wa.me/${cleanWhatsappNumber()}`;
 }
 
 function activeHotels() {
@@ -226,6 +255,7 @@ function categoryProfitSar(category, settings) {
 }
 
 const defaultZiyarats = [
+  { id: "makkah", name: "Makkah Ziyarat", price: 250, image: "https://tse3.mm.bing.net/th?q=Makkah%20Ziyarat%20Jabal%20Al%20Noor%20Cave%20Hira&w=900&h=560&c=7&rs=1&p=0&o=5&pid=1.7" },
   { id: "taif", name: "Taif Ziyarat", price: 500, image: "https://tse3.mm.bing.net/th?q=Taif%20Saudi%20Arabia%20mountains%20Al%20Hada&w=900&h=560&c=7&rs=1&p=0&o=5&pid=1.7" },
   { id: "badar", name: "Badar Ziyarat", price: 560, image: "https://tse3.mm.bing.net/th?q=Badr%20Saudi%20Arabia%20historical%20site%20mosque&w=900&h=560&c=7&rs=1&p=0&o=5&pid=1.7" },
   { id: "madina", name: "Madina Ziyarat", price: 1200, image: "https://tse3.mm.bing.net/th?q=Madina%20Saudi%20Arabia%20Masjid%20Nabawi%20green%20dome&w=900&h=560&c=7&rs=1&p=0&o=5&pid=1.7" }
@@ -234,7 +264,18 @@ const defaultZiyarats = [
 function activeZiyarats() {
   const overrides = JSON.parse(localStorage.getItem("umrahZiyaratOverrides") || "{}");
   const deleted = new Set(JSON.parse(localStorage.getItem("umrahDeletedZiyarats") || "[]"));
-  const base = defaultZiyarats.filter((item) => !deleted.has(item.id)).map((item) => ({ ...item, ...(overrides[item.id] || {}) }));
+  const settings = localSettings();
+  const settingPrices = {
+    makkah: settings.ziyaratMakkahSar,
+    taif: settings.ziyaratTaifSar || settings.ziyaratSar,
+    badar: settings.ziyaratBadarSar,
+    madina: settings.ziyaratMadinaSar
+  };
+  const base = defaultZiyarats.filter((item) => !deleted.has(item.id)).map((item) => ({
+    ...item,
+    price: Number(settingPrices[item.id] ?? item.price) || item.price,
+    ...(overrides[item.id] || {})
+  }));
   const ids = new Set(base.map((item) => item.id));
   return [...base, ...Object.values(overrides).filter((item) => item?.id && !deleted.has(item.id) && !ids.has(item.id))];
 }
@@ -494,8 +535,10 @@ function quote() {
     return sum + sar(row && state.vehicle ? row.rates[state.vehicle] || 0 : 0);
   }, 0);
   const travelers = state.adults + state.children;
+  const visaTravelers = state.adults + state.children + state.infants;
   const settings = localSettings();
-  const visaTotal = state.visa ? travelers * (Number(settings.visaPrice) || 0) : 0;
+  const visaSar = normalizedVisaPriceSar(settings);
+  const visaTotal = Math.round(visaTravelers * visaSar * (Number(settings.exchangeRate) || exchangeRate));
   const ziyaratTotal = state.ziyarat ? sar(ziyaratRateSar()) : 0;
   const subtotal = hotelTotal + transportTotal + visaTotal + ziyaratTotal;
   const packageCategory = selectedPackageCategory(hotelLines);
@@ -505,6 +548,8 @@ function quote() {
     hotelTotal,
     transportTotal,
     visaTotal,
+    visaSar,
+    visaTravelers,
     ziyaratTotal,
     packageCategory,
     subtotal,
@@ -514,6 +559,7 @@ function quote() {
 }
 
 function render() {
+  updateWhatsappLinks();
   document.body.dataset.step = wizardSteps[state.currentStep].title.toLowerCase();
   document.body.dataset.submitted = state.submitted ? "true" : "false";
   if (!state.submitted) {
@@ -725,6 +771,7 @@ function quoteBreakdown(q = quote()) {
   return `
     <div class="breakRow"><span>Hotels</span><b>${q.hotelTotal ? "Included" : "Pending"}</b></div>
     <div class="breakRow"><span>Transport</span><b>${q.transportTotal ? "Included" : "Pending"}</b></div>
+    <div class="breakRow"><span>Visa Processing</span><b>Included - SAR ${Number(q.visaSar || 0).toLocaleString()} per traveler</b></div>
     <div class="breakRow"><span>Ziyarat</span><b>${state.ziyarat ? `${ziyaratLabel()} included` : "Not included"}</b></div>
     <div class="breakRow"><span>Package category</span><b>${q.packageCategory}</b></div>
     <div class="breakRow total"><span>Total</span><b>${money(q.total)}</b></div>
@@ -1198,6 +1245,7 @@ function renderEstimateCard(q) {
       <p><span>Duration</span><b>${state.nights || 0} nights</b></p>
       <p><span>Cities</span><b>${sequence.length ? displayText([...new Set(sequence)].join(", ")) : "-"}</b></p>
       <p><span>Travelers</span><b>${state.adults + state.children} pax</b></p>
+      <p><span>Visa Processing</span><b>Included</b></p>
       <p><span>Ziyarat</span><b>${state.ziyarat ? ziyaratLabel() : "Not included"}</b></p>
     </div>
     <div class="estimateBlock">
@@ -1263,7 +1311,7 @@ function viewItinerary() {
   renderItinerary(quote());
   renderStepButtons();
   showSubmitModal();
-  document.getElementById("itinerary").scrollIntoView({ behavior: "smooth", block: "start" });
+  document.getElementById("itinerary")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function nextStep() {
@@ -1366,10 +1414,16 @@ function buildBrandedPdf(q, logo) {
   const settings = localSettings();
   const logoBytes = logo?.bytes || null;
   const travelers = state.adults + state.children;
-  const hotelRows = q.hotelLines.map((line) => {
-    const dates = `${displayDate(line.checkIn)} to ${displayDate(line.checkOut)}`;
-    return `${displayText(line.city)}: ${line.hotel ? displayText(line.hotel.name) : "Not selected"} | ${line.nights} nights | ${dates}`;
-  });
+  const agencyWhatsapp = displayWhatsappNumber();
+  const routeLabel = displayText(routeSequence().join(" -> ")) || "Not selected";
+  const hotelRows = q.hotelLines.map((line) => ({
+    city: displayText(line.city),
+    hotel: line.hotel ? displayText(line.hotel.name) : "Not selected",
+    category: line.hotel ? displayCategory(line.hotel.category) : "",
+    nights: `${line.nights} night${line.nights === 1 ? "" : "s"}`,
+    dates: `${displayDate(line.checkIn)} to ${displayDate(line.checkOut)}`,
+    note: line.stay?.hasMissingRates ? "Manual rate confirmation required" : "Rates included"
+  }));
   const itineraryRows = q.hotelLines.map((line) => `${displayText(line.city)} stay from ${displayDate(line.checkIn)} to ${displayDate(line.checkOut)} at ${line.hotel ? displayText(line.hotel.name) : "selected hotel pending confirmation"}.`);
   if (state.ziyarat) {
     selectedZiyaratRecords().forEach((item) => itineraryRows.push(`${displayText(item.name)} guided tour included. Exact date and pickup time will be confirmed with the final booking.`));
@@ -1401,16 +1455,21 @@ function buildBrandedPdf(q, logo) {
 
   const pages = [];
   let commands = [];
-  let y = 696;
+  let y = 700;
   const margin = 44;
   const pageBottom = 58;
   const green = "0.05 0.36 0.26";
+  const greenLight = "0.94 0.98 0.96";
+  const gold = "0.78 0.58 0.18";
   const black = "0.06 0.09 0.14";
   const muted = "0.33 0.41 0.52";
+  const lineColor = "0.80 0.85 0.82";
 
   const add = (cmd) => commands.push(cmd);
   const text = (value, x, yy, size = 10, font = "F1", color = black) => add(`${color} rg BT /${font} ${size} Tf ${x} ${yy} Td (${pdfEscape(value)}) Tj ET`);
   const line = (x1, yy, x2, color = "0.86 0.86 0.84") => add(`${color} RG ${x1} ${yy} m ${x2} ${yy} l S`);
+  const rect = (x, yy, w, h, fill = "1 1 1", stroke = lineColor) => add(`${fill} rg ${stroke} RG ${x} ${yy} ${w} ${h} re B`);
+  const solidRect = (x, yy, w, h, fill) => add(`${fill} rg ${x} ${yy} ${w} ${h} re f`);
   const wrap = (value, maxChars) => {
     const words = pdfEscape(value).split(/\s+/);
     const rows = [];
@@ -1429,7 +1488,7 @@ function buildBrandedPdf(q, logo) {
   const newPage = () => {
     pages.push(commands.join("\n"));
     commands = [];
-    y = 696;
+    y = 700;
   };
   const ensure = (height) => {
     if (y - height < pageBottom) {
@@ -1440,7 +1499,7 @@ function buildBrandedPdf(q, logo) {
   };
   const heading = (value) => {
     ensure(38);
-    text(value, margin, y, 13, "F2", green);
+    text(value, margin, y, 14, "F2", green);
     y -= 10;
     line(margin, y, 551, "0.05 0.36 0.26");
     y -= 18;
@@ -1462,53 +1521,93 @@ function buildBrandedPdf(q, logo) {
     y -= 4;
   };
   const header = (first = false) => {
-    add(`${green} rg 0 792 595 50 re f`);
-    add("1 1 1 rg 0 742 595 50 re f");
+    solidRect(0, 792, 595, 50, green);
+    solidRect(0, 742, 595, 50, "1 1 1");
     if (logoBytes) add("q 92 0 0 48 42 744 cm /Logo Do Q");
     text("TOURS IN PAKISTAN", 44, 814, 18, "F2", "1 1 1");
     text("Umrah Package Quotation", 44, 796, 10, "F1", "1 1 1");
-    text(first ? "Prepared quotation" : "Quotation details", 430, 762, 10, "F2", green);
-    text(new Date().toLocaleDateString("en-GB"), 430, 748, 9, "F1", muted);
+    text(first ? "Prepared quotation" : "Quotation details", 420, 764, 10, "F2", green);
+    text(new Date().toLocaleDateString("en-GB"), 420, 750, 9, "F1", muted);
   };
   const footer = () => {
     line(44, 40, 551);
-    text("Tours in Pakistan | Final booking subject to availability, supplier confirmation and payment clearance.", 44, 24, 8, "F1", muted);
+    text(`Tours in Pakistan | WhatsApp ${agencyWhatsapp} | toursinpakistan.com`, 44, 25, 8, "F2", green);
+    text("Final booking subject to availability, supplier confirmation and payment clearance.", 300, 25, 8, "F1", muted);
+  };
+  const statCard = (x, yy, w, title, value) => {
+    rect(x, yy, w, 50, "1 1 1", lineColor);
+    text(title, x + 12, yy + 31, 8, "F2", muted);
+    text(value, x + 12, yy + 13, 11, "F2", green);
+  };
+  const hotelCard = (lineData) => {
+    ensure(82);
+    rect(margin, y - 66, 507, 66, "1 1 1", lineColor);
+    solidRect(margin, y - 66, 5, 66, green);
+    text(lineData.city, margin + 18, y - 20, 12, "F2", green);
+    wrap(lineData.hotel, 42).slice(0, 2).forEach((part, index) => text(part, margin + 120, y - 20 - (index * 12), 10, index ? "F1" : "F2", black));
+    text(`${lineData.nights} | ${lineData.dates}`, margin + 18, y - 42, 9, "F1", muted);
+    text(lineData.category || lineData.note, margin + 360, y - 20, 9, "F2", green);
+    text(lineData.note, margin + 360, y - 38, 8, "F1", muted);
+    y -= 78;
   };
 
   header(true);
-  heading("Customer & Package Summary");
-  row("Customer", state.contactName || "Not provided");
-  row("Phone / WhatsApp", state.phone || "Not provided");
-  row("Route", displayText(routeSequence().join(" -> ")) || "Not selected");
-  row("Travel Date", state.startDate || "Not selected");
-  row("Duration", `${state.nights || 0} nights`);
-  row("Travelers", `${state.adults} adults, ${state.children} children, ${state.infants} infants`);
-  row("Rooms", `${state.rooms} x ${state.roomType || "Not selected"}`);
-  y -= 6;
-  add("0.95 0.97 0.96 rg 44 510 507 58 re f");
-  text("Estimated Total", 60, 548, 11, "F2", green);
-  text(money(q.total), 60, 524, 22, "F2", green);
-  text("Final price may vary based on availability and confirmation.", 285, 530, 9, "F1", muted);
-  y = 484;
+  rect(44, 636, 507, 84, greenLight, "0.74 0.83 0.78");
+  text("Estimated Total", 60, 690, 11, "F2", green);
+  text(money(q.total), 60, 662, 24, "F2", green);
+  text("Final price may vary based on availability and confirmation.", 306, 676, 9, "F1", muted);
+  text(`Prepared for: ${state.contactName || "Customer"}`, 306, 696, 10, "F2", black);
+  text(`Customer WhatsApp: ${state.phone || "Not provided"}`, 306, 660, 9, "F1", muted);
+  text(`Agency WhatsApp: ${agencyWhatsapp}`, 306, 646, 9, "F2", green);
 
-  heading("Hotels");
-  bullets(hotelRows);
+  statCard(44, 568, 160, "Duration", `${state.nights || 0} nights`);
+  statCard(218, 568, 160, "Travelers", `${travelers} pax`);
+  statCard(392, 568, 160, "Rooms", `${state.rooms} x ${state.roomType}`);
+
+  y = 542;
+  heading("Package Route");
+  rect(44, y - 46, 507, 46, "1 1 1", lineColor);
+  text(routeLabel, 60, y - 20, 12, "F2", black);
+  text(`Travel date: ${state.startDate || "Not selected"}`, 60, y - 36, 9, "F1", muted);
+  y -= 66;
+
+  heading("Selected Hotels");
+  hotelRows.forEach(hotelCard);
   heading("Transport");
-  bullets(transportRows);
+  rect(44, y - 66, 507, 66, "1 1 1", lineColor);
+  text(vehicleLabel(state.vehicle) || "Vehicle not selected", 60, y - 20, 12, "F2", green);
+  text(state.transportMode === "full" ? "Full transport" : "Selective transport", 60, y - 38, 9, "F1", muted);
+  wrap(readableTransportSectors().join(", ") || "No sectors selected", 70).slice(0, 2).forEach((part, index) => text(part, 225, y - 20 - (index * 12), 9, "F1", black));
+  y -= 86;
+
   heading("Extras");
-  bullets([
-    `Ziyarat: ${state.ziyarat ? `${ziyaratLabel()} included` : "Not included"}`
-  ]);
+  rect(44, y - 66, 507, 66, "1 1 1", lineColor);
+  text("Visa Processing", 60, y - 18, 10, "F2", green);
+  text(`${q.visaTravelers || travelers} traveler${(q.visaTravelers || travelers) === 1 ? "" : "s"} x SAR ${Number(q.visaSar || 0).toLocaleString()} included`, 170, y - 18, 9, "F1", black);
+  text("Ziyarat", 60, y - 42, 10, "F2", green);
+  text(state.ziyarat ? ziyaratLabel() : "Not included", 140, y - 42, 9, "F1", black);
   footer();
   newPage();
 
   header(false);
-  heading("Day-by-Day Itinerary");
-  bullets([
-    ...itineraryRows,
-    "Free time for prayers, personal worship and local movement according to hotel location.",
-    "Hotel check-out according to the confirmed booking schedule."
-  ]);
+  heading("Package Itinerary");
+  hotelRows.forEach((item, index) => {
+    ensure(56);
+    rect(44, y - 44, 507, 44, "1 1 1", lineColor);
+    text(`${index + 1}. ${item.city}`, 60, y - 17, 11, "F2", green);
+    text(`${item.hotel} | ${item.nights}`, 150, y - 17, 9, "F1", black);
+    text(item.dates, 150, y - 32, 8, "F1", muted);
+    y -= 56;
+  });
+  if (state.ziyarat && selectedZiyaratRecords().length) {
+    heading("Ziyarat Tours");
+    selectedZiyaratRecords().forEach((item) => {
+      ensure(28);
+      text(`- ${displayText(item.name)} | SAR ${Number(item.price || 0).toLocaleString()}`, 60, y, 9, "F1", black);
+      y -= 14;
+    });
+    y -= 6;
+  }
   heading("Rules & Regulations");
   bullets(rules);
   heading("Payment & Cancellation Notes");
